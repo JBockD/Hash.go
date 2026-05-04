@@ -1,6 +1,6 @@
 module hash
 
-go 1.26.2
+go 1.21.5
 
 require github.com/stretchr/testify v1.11.1
 
