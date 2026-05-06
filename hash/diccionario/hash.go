@@ -11,7 +11,9 @@ const (
 	VACIO estado = iota
 	OCUPADA
 	BORRADA
-	TRESCUARTOS         = 3 / 4
+)
+const (
+	TRESCUARTOS         = 0.75
 	POR_CUANTO_AUMENTAR = 2
 )
 
@@ -39,11 +41,59 @@ type hashCerrado[K comparable, V any] struct {
 	tam      int
 	borrados int
 }
+type iterador[K comparable, V any] struct {
+	hash   *hashCerrado[K, V]
+	actual int
+}
+
+func (h *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
+	it := &iterador[K, V]{
+		hash:   h,
+		actual: 0,
+	}
+	for it.actual < len(it.hash.tabla) && h.tabla[it.actual].estado != OCUPADA {
+		it.actual++
+	}
+	return it
+
+}
+func (it *iterador[K, V]) HayAlgoMas() bool {
+	if it.actual >= len(it.hash.tabla) {
+		return false
+	}
+	return it.hash.tabla[it.actual].estado == OCUPADA
+}
+func (it iterador[K, V]) Avanzar() {
+	it.actual++
+	if !it.HayAlgoMas() {
+		panic("El iterador termino de iterar")
+	}
+
+}
+func (it iterador[K, V]) VerActual() (K, V) {
+	if !it.HayAlgoMas() {
+		panic("El iterador termino de iterar")
+	}
+	return it.hash.tabla[it.actual].clave, it.hash.tabla[it.actual].dato
+
+}
 
 // PRE: -
 // POST: Crea un hash cerrado con un tamaño inicial de 5
 func CrearHash[K comparable, V any]() *hashCerrado[K, V] {
 	return &hashCerrado[K, V]{tabla: make([]celdaHash[K, V], 5), cantidad: 0, tam: 5, borrados: 0}
+}
+func (hash *hashCerrado[K, V]) Iterar(visitar func(K, V) bool) {
+	for i := 0; i < hash.tam; i++ {
+		actual := hash.tabla[i]
+		if actual.estado == OCUPADA {
+			seguir := visitar(actual.clave, actual.dato)
+			if !seguir {
+				return
+
+			}
+		}
+	}
 }
 
 func (hash *hashCerrado[K, V]) buscar(clave K) (int, bool) {
@@ -107,7 +157,7 @@ func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
 	posicion, encontrada := hash.buscar(clave)
 	carga := (hash.cantidad + hash.borrados) / hash.tam
 
-	if carga >= hash.tam*TRESCUARTOS {
+	if carga >= int(float64(hash.tam)*TRESCUARTOS) {
 		redimensionar(hash, hash.tam*POR_CUANTO_AUMENTAR)
 	}
 
@@ -122,7 +172,7 @@ func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
 
 // PRE: El hash debe estar inicializado
 // POST: Devuelve la cantidad de elementos dentro del diccionario
-func (hash *hashCerrado[K, V]) Cantidad(clave K, dato V) int {
+func (hash *hashCerrado[K, V]) Cantidad() int {
 
 	return hash.cantidad
 }
