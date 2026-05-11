@@ -17,14 +17,22 @@ const (
 	POR_CUANTO_AUMENTAR = 2
 )
 
+// PRE: La clave debe ser de un tipo comparable
+// POST: Devuelve un slice de bytes representando la clave
 func convertirABytes[K comparable](clave K) []byte {
 	return []byte(fmt.Sprintf("%v", clave))
 }
+
+// PRE: La clave debe ser de un tipo comparable
+// POST: Devuelve un hash de la clave utilizando el algoritmo FNV-1a
 func calcularHash[K comparable](clave K) uint64 {
 	h := fnv.New64a()
 	h.Write(convertirABytes(clave))
 	return h.Sum64()
 }
+
+// PRE: El hash debe estar inicializado
+// POST: Devuelve la posición inicial para una clave dada
 func (h *hashCerrado[K, V]) posicionInicial(clave K) int {
 	return int(calcularHash(clave) % uint64(h.tam))
 }
@@ -79,6 +87,9 @@ func (it *iterador[K, V]) Avanzar() {
 		it.actual++
 	}
 }
+
+// PRE: HayAlgoMas debe ser true
+// POST: Devuelve la clave y el dato del elemento donde esta el iterador
 func (it iterador[K, V]) VerActual() (K, V) {
 	if !it.HayAlgoMas() {
 		panic("El iterador termino de iterar")
@@ -96,6 +107,9 @@ func CrearHash[K comparable, V any]() *hashCerrado[K, V] {
 		tam:      5,
 		borrados: 0}
 }
+
+// PRE: Visitar debe devolver valores validos
+// POST: Itera el hash si visitar es true, se detiene si visitar devuelve false
 func (hash *hashCerrado[K, V]) Iterar(visitar func(K, V) bool) {
 	for i := 0; i < hash.tam; i++ {
 		actual := hash.tabla[i]
