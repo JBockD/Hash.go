@@ -26,11 +26,7 @@ func calcularHash[K comparable](clave K) uint64 {
 	return h.Sum64()
 }
 func (h *hashCerrado[K, V]) posicionInicial(clave K) int {
-	posicion := int(calcularHash(clave) % uint64(len(h.tabla)))
-	if posicion < 0 {
-		posicion += len(h.tabla)
-	}
-	return posicion
+	return int(calcularHash(clave) % uint64(h.tam))
 }
 
 type celdaHash[K comparable, V any] struct {
@@ -75,12 +71,12 @@ func (it *iterador[K, V]) HayAlgoMas() bool {
 // PRE: HayAlgoMas debe ser true
 // POST: Avanza el iterador al siguiente elemento OCUPADO
 func (it *iterador[K, V]) Avanzar() {
+	if !it.HayAlgoMas() {
+		panic("El iterador termino de iterar")
+	}
 	it.actual++
 	for it.actual < len(it.hash.tabla) && it.hash.tabla[it.actual].estado != OCUPADA {
 		it.actual++
-	}
-	if !it.HayAlgoMas() {
-		panic("El iterador termino de iterar")
 	}
 }
 func (it iterador[K, V]) VerActual() (K, V) {
@@ -157,6 +153,9 @@ func redimensionar[K comparable, V any](hash *hashCerrado[K, V], nuevo_tamano in
 		celda := hash.tabla[i]
 		if celda.estado == OCUPADA {
 			posicion := int(calcularHash(celda.clave) % uint64(nuevo_tamano))
+			for nueva_tabla[posicion].estado == OCUPADA {
+				posicion = (posicion + 1) % nuevo_tamano
+			}
 			nueva_tabla[posicion] = celda
 		}
 	}
