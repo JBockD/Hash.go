@@ -67,7 +67,7 @@ func (h *hashCerrado[K, V]) Iterador() IterDiccionario[K, V] {
 	return it
 }
 
-// PRE: -
+// PRE: El iterador debe estar inicializado
 // POST: Devuelve true si el iterador se encuentra en una posición OCUPADA
 func (it *iterador[K, V]) HayAlgoMas() bool {
 	if it.actual >= len(it.hash.tabla) {
@@ -76,7 +76,7 @@ func (it *iterador[K, V]) HayAlgoMas() bool {
 	return it.hash.tabla[it.actual].estado == OCUPADA
 }
 
-// PRE: HayAlgoMas debe ser true
+// PRE: El iterador debe estar inicializado
 // POST: Avanza el iterador al siguiente elemento OCUPADO
 func (it *iterador[K, V]) Avanzar() {
 	if !it.HayAlgoMas() {
@@ -88,7 +88,7 @@ func (it *iterador[K, V]) Avanzar() {
 	}
 }
 
-// PRE: HayAlgoMas debe ser true
+// PRE: El iterador debe estar inicializado
 // POST: Devuelve la clave y el dato del elemento donde esta el iterador
 func (it iterador[K, V]) VerActual() (K, V) {
 	if !it.HayAlgoMas() {
