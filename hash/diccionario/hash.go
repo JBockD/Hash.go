@@ -14,6 +14,7 @@ const (
 )
 const (
 	TRESCUARTOS         = 0.75
+	UNCUARTO            = 0.25
 	POR_CUANTO_AUMENTAR = 2
 )
 
@@ -38,9 +39,9 @@ func (h *hashCerrado[K, V]) posicionInicial(clave K) int {
 }
 
 type celdaHash[K comparable, V any] struct {
-	clave K
-	dato  V
-	estado
+	clave  K
+	dato   V
+	estado estado
 }
 
 type hashCerrado[K comparable, V any] struct {
@@ -100,12 +101,13 @@ func (it iterador[K, V]) VerActual() (K, V) {
 
 // PRE: -
 // POST: Crea un hash cerrado con un tamaño inicial de 5
-func CrearHash[K comparable, V any]() *hashCerrado[K, V] {
+func CrearHash[K comparable, V any]() Diccionario[K, V] {
 	return &hashCerrado[K, V]{
 		tabla:    make([]celdaHash[K, V], 5),
 		cantidad: 0,
 		tam:      5,
-		borrados: 0}
+		borrados: 0,
+	}
 }
 
 // PRE: Visitar debe devolver valores validos
@@ -178,12 +180,17 @@ func redimensionar[K comparable, V any](hash *hashCerrado[K, V], nuevo_tamano in
 	hash.tam = nuevo_tamano
 }
 
+// PRE: El hash debe estar inicializado
+// POST: Devuelve la carga del hash
+func calcularCarga[K comparable, V any](hash *hashCerrado[K, V]) float64 {
+	return float64(hash.cantidad+hash.borrados) / float64(hash.tam)
+}
+
 // PRE: El hash debe tener espacios habilitados
 // POST: Guardo un elemento en la tabla Hash si el espacio no esta OCUPADO o si la clave es la misma
-func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) bool {
+func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) {
 	posicion, encontrada := hash.buscar(clave)
-	carga := float64(hash.cantidad+hash.borrados) / float64(hash.tam)
-	guardada := false
+	carga := calcularCarga(hash)
 
 	if carga >= TRESCUARTOS {
 		redimensionar(hash, hash.tam*POR_CUANTO_AUMENTAR)
@@ -192,13 +199,10 @@ func (hash *hashCerrado[K, V]) Guardar(clave K, dato V) bool {
 
 	if encontrada {
 		hash.tabla[posicion].dato = dato
-		guardada = true
 	} else {
 		hash.tabla[posicion] = celdaHash[K, V]{clave, dato, OCUPADA}
 		hash.cantidad++
-		guardada = true
 	}
-	return guardada
 }
 
 // PRE: El hash debe estar inicializado
@@ -212,7 +216,6 @@ func (hash *hashCerrado[K, V]) Cantidad() int {
 // POST: Devuelve el dato asociado a la clave y cambia el estado de la celda a BORRADA
 func (hash *hashCerrado[K, V]) Borrar(clave K) V {
 	posicion, encontrada := hash.buscar(clave)
-
 	if !encontrada {
 		panic("La clave no pertenece al diccionario")
 	}
@@ -220,5 +223,10 @@ func (hash *hashCerrado[K, V]) Borrar(clave K) V {
 	hash.tabla[posicion].estado = BORRADA
 	hash.cantidad--
 	hash.borrados++
+
+	carga := calcularCarga(hash)
+	if carga <= UNCUARTO && hash.tam > 5 && hash.borrados > hash.cantidad/2 {
+		redimensionar(hash, hash.tam/POR_CUANTO_AUMENTAR)
+	}
 	return hash.tabla[posicion].dato
 }
