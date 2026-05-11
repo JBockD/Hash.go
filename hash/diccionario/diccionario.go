@@ -1,6 +1,5 @@
 package diccionario
 
-
 type Diccionario[K comparable, V any] interface {
 
 	// Guardar guarda el par clave-dato en el Diccionario. Si la clave ya se encontraba, se actualiza el dato asociado
